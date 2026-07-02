@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Библиотека офиса</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #1a1a18;
+  --ink-2: #4a4a45;
+  --ink-3: #8a8a84;
+  --paper: #f5f3ee;
+  --paper-2: #eceae4;
+  --paper-3: #dedad2;
+  --accent: #2d5be3;
+  --accent-bg: #eef2fd;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #f0ede6;
+    --ink-2: #aaa89f;
+    --ink-3: #6a6a62;
+    --paper: #141412;
+    --paper-2: #1e1e1b;
+    --paper-3: #2a2a26;
+    --accent: #6b8ef5;
+    --accent-bg: #1a1f35;
+  }
+}
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
+
+.header { padding: 3rem 2rem 2rem; max-width: 1100px; margin: 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; flex-wrap: wrap; }
+.header-left h1 { font-family: 'Unbounded', sans-serif; font-size: clamp(1.5rem, 4vw, 2.3rem); font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; }
+.header-left p { margin-top: 0.5rem; font-size: 13px; color: var(--ink-3); }
+.header-count { font-family: 'Unbounded', sans-serif; font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 600; color: var(--paper-3); line-height: 1; letter-spacing: -0.04em; user-select: none; }
+
+.toolbar { max-width: 1100px; margin: 0 auto; padding: 0 2rem 1rem; }
+.search-wrap { position: relative; }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--ink-3); pointer-events: none; }
+#search { width: 100%; height: 42px; padding: 0 14px 0 40px; font-size: 14px; font-family: inherit; background: var(--paper-2); border: 1.5px solid var(--paper-3); border-radius: 10px; color: var(--ink); outline: none; transition: border-color 0.15s; }
+#search:focus { border-color: var(--accent); }
+#search::placeholder { color: var(--ink-3); }
+
+.filters { max-width: 1100px; margin: 0 auto; padding: 0.75rem 2rem 1rem; display: flex; gap: 6px; flex-wrap: wrap; }
+.filter-btn { font-size: 12px; font-family: inherit; padding: 5px 13px; border-radius: 20px; border: 1.5px solid var(--paper-3); background: var(--paper-2); color: var(--ink-2); cursor: pointer; transition: all 0.12s; white-space: nowrap; }
+.filter-btn:hover { border-color: var(--ink-3); color: var(--ink); }
+.filter-btn.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); font-weight: 500; }
+
+.stats { max-width: 1100px; margin: 0 auto; padding: 0 2rem 0.75rem; font-size: 13px; color: var(--ink-3); }
+.stats strong { color: var(--ink-2); font-weight: 500; }
+
+.grid { max-width: 1100px; margin: 0 auto; padding: 0 2rem 4rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; }
+
+.card { background: var(--paper-2); border: 1.5px solid var(--paper-3); border-radius: 14px; padding: 1.1rem 1.25rem; display: flex; flex-direction: column; gap: 10px; transition: border-color 0.12s, transform 0.1s; }
+.card:hover { border-color: var(--ink-3); transform: translateY(-2px); }
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.card-meta { flex: 1; min-width: 0; }
+.card-title { font-size: 14px; font-weight: 500; line-height: 1.35; color: var(--ink); }
+.card-author { font-size: 12px; color: var(--ink-3); margin-top: 3px; }
+.badge { font-size: 10px; padding: 3px 9px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; font-weight: 500; }
+.card-desc { font-size: 13px; color: var(--ink-2); line-height: 1.65; flex: 1; min-height: 42px; }
+.card-footer { display: flex; align-items: center; padding-top: 8px; border-top: 1px solid var(--paper-3); }
+.status { font-size: 11px; color: var(--ink-3); display: flex; align-items: center; gap: 5px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: #4caf82; flex-shrink: 0; }
+.dot.away { background: #e8a020; }
+
+.skel { background: var(--paper-3); border-radius: 4px; display: block; animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:.7} }
+
+.empty { grid-column: 1/-1; text-align: center; padding: 4rem 2rem; color: var(--ink-3); font-size: 14px; }
+.empty svg { display: block; margin: 0 auto 1rem; opacity: .25; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--paper); }
+::-webkit-scrollbar-thumb { background: var(--paper-3); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Библиотека<br>офиса</h1>
+    <p>Описания загружаются автоматически при открытии</p>
+  </div>
+  <div class="header-count" id="totalCount">—</div>
+</div>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="search" placeholder="Поиск по названию или автору…" autocomplete="off">
+  </div>
+</div>
+
+<div class="filters" id="filters"></div>
+<div class="stats" id="stats"></div>
+<div class="grid" id="grid"></div>
+
+<script>
+const BOOKS_RAW = [
+  ["Балабанов","Занимательное медиапланирование","в офисе"],
+  ["Ансофф","Стратегический менеджмент","в офисе"],
+  ["Джефф Лоусон","Спроси разработчика","в офисе"],
+  ["Джон Ле Карре","Шпион, пришедший с холода","в офисе"],
+  ["Том Демарко","Deadline","в офисе"],
+  ["Рагурам Раджан","Линии Разлома","в офисе"],
+  ["Робин Шарма","Монах, который продал свой феррари","в офисе"],
+  ["Итан Расиел","Метод McKinsey","в офисе"],
+  ["Джозеф Хеллер","Поправки-22","в офисе"],
+  ["Сет Годин","Фиолетовая корова","в офисе"],
+  ["Брент Доннели","Альфа-трейдер","в офисе"],
+  ["Дмитрий Соколов-Митрич","Яндекс.Книга","в офисе"],
+  ["Уолтер Айзексон","Стив Джобс","в офисе"],
+  ["Стивен Р. Кови","7 навыков высокоэффективных людей","в офисе"],
+  ["Дэвид Вайз","Прорыв в духе времени Google","в офисе"],
+  ["Менкью","Принципы экономики","в офисе"],
+  ["Портер","Конкурентная стратегия","в офисе"],
+  ["Дункан Кларк","Alibaba: история мирового восхождения","в офисе"],
+  ["Сигео Синго","Быстрая переналадка","в офисе"],
+  ["Ларри Веббер","Эффективный маркетинг в интернете","в офисе"],
+  ["Алан Лафли, Роджер Мартин","Игра на победу","в офисе"],
+  ["Майерс","Социальная психология","в офисе"],
+  ["Станислас Деан","Как мы учимся","в офисе"],
+  ["Хэл Вэриан","Микроэкономика","в офисе"],
+  ["Эрик Рис","Бизнес с нуля","в офисе"],
+  ["Клотер Рапай","Культурный код","в офисе"],
+  ["Джефф Сазерленд","Революционный метод управления проектами","в офисе"],
+  ["Друкер П.","Энциклопедия менеджмента","в офисе"],
+  ["Кенинчи Омаэ","Мышление стратега","в офисе"],
+  ["Сэм Уолтон","Сделано в Америке","в офисе"],
+  ["Манфред Кетс де Врис","Лидер на кушетке","в офисе"],
+  ["Марвин Бауэр","Курс на лидерство","в офисе"],
+  ["Нордстрем, Риддерстрале","Бизнес в стиле фанк","в офисе"],
+  ["Дмитрий Козлов","ДАО производственной безопасности","в офисе"],
+  ["Ричард Брэнсон","Теряя невинность","в офисе"],
+  ["Д. Дайер и др.","P&G: путь к успеху","в офисе"],
+  ["Михаил Умаров","PR в реальном времени","в офисе"],
+  ["Нассим Николас Талеб","Чёрный лебедь","в офисе"],
+  ["Стивен Р. Кови","Восьмой навык","в офисе"],
+  ["Абдульманов, Кибкало","Бизнес на свои","в офисе"],
+  ["Владимир Якуба","Дожим клиента","в офисе"],
+  ["Стивен Кови","Главное внимание — главным вещам","в офисе"],
+  ["Акофф, Эмери","О целеустремлённых системах","в офисе"],
+  ["Эндрю Гроув","Выживают только параноики","в офисе"],
+  ["Максим Ильяхов","Простые правила сильного текста","в офисе"],
+  ["Клаус Кобьёлл","Мотивация в стиле экшн","в офисе"],
+  ["Генри Форд","Моя жизнь, мои достижения","в офисе"],
+  ["Маршал Голдсмит","Прыгни выше головы","в офисе"],
+  ["Кристофер Воглер","Путешествие писателя","в офисе"],
+  ["Пелевин","Числа","в офисе"],
+  ["Рэй Крок","McDonald's. Как создавалась империя","в офисе"],
+  ["Глеб Архангельский","Тайм-драйв","в офисе"],
+  ["Джек Траут","Траут о стратегии","в офисе"],
+  ["Клод Хопкинс","Моя жизнь в рекламе","в офисе"],
+  ["Стивен Хокинг","Краткие ответы на большие вопросы","в офисе"],
+  ["Chuck Palahniuk","Invisible Monsters","в офисе"],
+  ["Chuck Palahniuk","Haunted","в офисе"],
+  ["Майкл Каннингем","Часы","в офисе"],
+  ["Питерс, Уотерман","В поисках совершенства","в офисе"],
+  ["Ли Якока","Карьера менеджера","в офисе"],
+  ["Андрес Дальвиг","IKEA — собери свою мечту","в офисе"],
+  ["Говард Бехар","Дело не в кофе","в офисе"],
+  ["Эшли Вэнс","Илон Маск и поиск фантастического будущего","в офисе"],
+  ["Ицхак Адизес","Управление жизненным циклом корпорации","в офисе"],
+  ["Генри Минцберг","Действуй эффективно","в офисе"],
+  ["Уоррен Баффет","Эссе об инвестициях","в офисе"],
+  ["Юваль Ной Харари","21 урок для XXI века","в офисе"],
+  ["Рэй Далио","Принципы. Жизнь и работа","в офисе"],
+  ["Джеффри Янг, Вильям Саймон","iКона. Стив Джобс","в офисе"],
+  ["Уильям Детмер","Теория ограничений Голдратта","в офисе"],
+  ["Клейтон Кристенсен","Дилемма инноватора","в офисе"],
+  ["Дахигг","Сила привычки","в офисе"],
+  ["Ким Чан, Рене Моборн","Стратегия голубого океана","у сотрудника"],
+  ["Линда Хилл","Трудно быть боссом","в офисе"],
+  ["Ричард Брэнсон","К чёрту всё! Берись и делай","в офисе"],
+  ["Акио Морита","Сделано в Японии (Sony)","в офисе"],
+  ["Жан-Жак Ламбен","Менеджмент, ориентированный на рынок","в офисе"],
+  ["Даниэль Джонс, Джеймс Вумек","Бережливое производство","в офисе"],
+  ["Томас Пикетти","Капитал в XXI веке","в офисе"],
+  ["Клара Ших","Эра Facebook","в офисе"],
+  ["Уильям Зинсер","Как писать хорошо","в офисе"],
+  ["Огилви","О рекламе","в офисе"],
+  ["Радислав Гандапас","К выступлению готов","в офисе"],
+  ["Дейл Карнеги","Как располагать к себе людей","в офисе"],
+  ["Игорь Манн","Маркетинг на 100%","в офисе"],
+  ["Карл Сьюэлл и Пол Браун","Клиенты на всю жизнь","в офисе"],
+  ["Эрик Берн","Игры, в которые играют люди","в офисе"],
+  ["Джон П. Коттер","Впереди перемен","в офисе"],
+  ["Джек Траут, Эл Райс","Позиционирование: битва за умы","в офисе"],
+  ["Генри Минцберг","Структура в кулаке","в офисе"],
+  ["Сомерсет Моэм","Узорный покров","в офисе"],
+  ["Марцин Виха","Как я разлюбил дизайн","в офисе"],
+  ["Фицджеральд","Великий Гэтсби","в офисе"],
+  ["Фредерик Бегбедер","99 франков","в офисе"],
+  ["Том Питерс","Тренды","в офисе"],
+  ["Майкл Льюис","Покер лжецов","в офисе"],
+  ["Цветаева","Душа, не знающая меры","в офисе"],
+  ["Йеспер Кунде","Корпоративная религия","в офисе"],
+  ["Марк Тангейт","Мужские бренды","в офисе"],
+  ["Риддерстрале, Нордстрем","Караоке-капитализм","в офисе"],
+  ["Карлос Кастанеда","Огонь изнутри","в офисе"],
+  ["Эли Шрангенхайм","Теория ограничений в действии","в офисе"],
+  ["Клейтон Кристенсен","Стратегия жизни","в офисе"],
+  ["Т. Гриффин","Чарли Мангер — разумный инвестор","в офисе"],
+  ["Тим Эш","Повышение эффективности интернет-рекламы","в офисе"],
+  ["Джулия Кэмерон","Путь художника","в офисе"],
+  ["Ари де Гиус","Живая компания","в офисе"],
+  ["Дж. К. Ролинг","Гарри Поттер и тайная комната","в офисе"],
+  ["Елена Резанова","Это норм!","в офисе"],
+  ["Харуки Мураками","Сжечь сарай","в офисе"],
+  ["Харуки Мураками","Медленной шлюпкой в Китай","в офисе"],
+  ["Томас Гарди","Тэсс из рода Д'Эрбервиллей","в офисе"],
+  ["Харуки Мураками","Подземка","в офисе"],
+  ["Александр Герцен","Былое и думы","в офисе"],
+  ["Дж. К. Ролинг","Фантастические твари и где они обитают","в офисе"],
+  ["Виктор Гюго","Собор Парижской Богоматери","в офисе"],
+  ["Булгаков","Мастер и Маргарита","в офисе"],
+  ["Чулпан Хаматова, Катерина Гордеева","Время колоть лёд","в офисе"],
+  ["Дж. К. Ролинг","Гарри Поттер и узник Азкабана","в офисе"],
+  ["Стивен Кинг","Сияние","в офисе"],
+  ["Ошо","Осознанность — ключ к жизни в равновесии","в офисе"],
+  ["Роберт Грин","33 стратегии войны","в офисе"],
+  ["Солженицын","В круге первом","в офисе"],
+  ["Рута Ванагайте, Эфраим Зурофф","Свои","в офисе"],
+  ["Джордж Р. Р. Мартин","Игра престолов","в офисе"],
+  ["Колин Кэмпбелл","Китайское исследование","в офисе"],
+  ["Бартон Биггс","Вышел хеджер из тумана","в офисе"],
+  ["Мартин Линдстром","Buy-ology","в офисе"],
+  ["Джон Уинзор","По ту сторону бренда","в офисе"],
+  ["Джек Шафер и Марвин Карлинс","Включаем обаяние по методике спецслужб","в офисе"],
+  ["Даниэль Канеман","Думай медленно, решай быстро","в офисе"],
+  ["Даниэль Канеман, Оливье Сибони","Шум","в офисе"],
+  ["Айн Рэнд","Источник","в офисе"],
+  ["Айн Рэнд","Атлант расправил плечи","в офисе"],
+  ["Роберт Сапольски","Кто мы такие?","в офисе"],
+  ["Светлана Иванова","Кандидат. Новичок. Сотрудник","в офисе"],
+  ["Грэхем Б.","Разумный инвестор","в офисе"],
+  ["Друкер П.","Эффективный руководитель","в офисе"],
+  ["Радислав Гандапас","Презентационный конструктор","в офисе"],
+  ["Филип Котлер","Основы маркетинга","в офисе"],
+  ["Жуков","Стой, кто ведёт? Биология поведения","в офисе"],
+  ["Харви Маккей","Как плавать среди акул","в офисе"],
+  ["У. Эдвард Деминг","Новая экономика","в офисе"],
+  ["Чарли Мангер","Разумный инвестор","в офисе"],
+  ["Павел Санаев","Хроники Раздолбая","в офисе"],
+  ["Джек Траут, Эл Райс","Маркетинговые войны","в офисе"],
+  ["Айн Рэнд","Мы живые","в офисе"],
+  ["Джон Ле Карре","Такой же предатель, как мы","в офисе"],
+  ["Уоррен Баффет","Как 5$ превратить в 50 миллиардов","в офисе"],
+  ["Владимир Федорин","Дорога к свободе","в офисе"],
+];
+
+const CATEGORIES = {
+  "Менеджмент": ["Стратегический менеджмент","Метод McKinsey","Энциклопедия менеджмента","Курс на лидерство","Выживают только параноики","Прыгни выше головы","Трудно быть боссом","Действуй эффективно","Управление жизненным циклом","Лидер на кушетке","Структура в кулаке","Эффективный руководитель","В поисках совершенства","Карьера менеджера","Революционный метод управления","Мышление стратега","Deadline","Живая компания","Впереди перемен","Менеджмент, ориентированный","Кандидат. Новичок","ДАО производственной"],
+  "Маркетинг": ["Занимательное медиапланирование","Фиолетовая корова","Маркетинг на 100%","Позиционирование","О рекламе","Эффективный маркетинг в интернете","Траут о стратегии","Клиенты на всю жизнь","Моя жизнь в рекламе","Buy-ology","Основы маркетинга","Игра на победу","Конкурентная стратегия","Маркетинговые войны","Мужские бренды","По ту сторону бренда","Корпоративная религия","Повышение эффективности интернет","PR в реальном","Дожим клиента","Эра Facebook","Культурный код"],
+  "Бизнес-истории": ["Стив Джобс","iКона","Яндекс.Книга","Alibaba","Google","Сделано в Америке","IKEA","Дело не в кофе","Илон Маск","Сделано в Японии","McDonald's","Моя жизнь, мои достижения","P&G","Теряя невинность","К чёрту всё!","Бизнес на свои","Как 5$"],
+  "Стратегия": ["Стратегия голубого океана","Дилемма инноватора","Стратегия жизни","Принципы экономики","Бизнес в стиле фанк","Теория ограничений","Принципы. Жизнь и работа","Бизнес с нуля","Линии Разлома","Тренды","Бережливое производство","Быстрая переналадка","Чёрный лебедь","Капитал в XXI","Новая экономика","Дорога к свободе","Микроэкономика"],
+  "Инвестиции": ["Альфа-трейдер","Разумный инвестор","Эссе об инвестициях","Чарли Мангер","Вышел хеджер из тумана","Покер лжецов"],
+  "Психология": ["7 навыков","Монах, который продал","Сила привычки","Думай медленно","Шум","Игры, в которые играют","Социальная психология","Кто мы такие","Как мы учимся","Тайм-драйв","Главное внимание","33 стратегии войны","Включаем обаяние","Биология поведения","Мотивация в стиле","Как плавать среди акул","Как располагать к себе","Восьмой навык","Это норм","Осознанность","Путь художника","Спроси разработчика"],
+  "Художественная": ["Поправки-22","Числа","Великий Гэтсби","99 франков","Мастер и Маргарита","Сияние","Узорный покров","Игра престолов","Гарри Поттер","Фантастические твари","Медленной шлюпкой","Подземка","Сжечь сарай","Собор Парижской","Атлант расправил","Источник","Мы живые","Invisible Monsters","Haunted","Часы","Шпион, пришедший","Такой же предатель","В круге первом","Тэсс","Свои","Хроники Раздолбая","Огонь изнутри","Дорога к свободе","Вышел хеджер","Время колоть лёд","Была и думы","Душа, не знающая"],
+  "Письмо и речь": ["Как писать хорошо","Простые правила сильного текста","К выступлению готов","Путешествие писателя","Презентационный конструктор"],
+};
+
+const BADGE_COLORS = {
+  "Менеджмент":    { bg: "#eef0fe", text: "#3d4cc4" },
+  "Маркетинг":     { bg: "#fef0ea", text: "#b84a1a" },
+  "Бизнес-истории":{ bg: "#e8f7f0", text: "#0f6e50" },
+  "Стратегия":     { bg: "#e8f2fd", text: "#1a5fa8" },
+  "Инвестиции":    { bg: "#fdf4e0", text: "#8a5500" },
+  "Психология":    { bg: "#fcedf4", text: "#9a2f5e" },
+  "Художественная":{ bg: "#f1efe9", text: "#5a5850" },
+  "Письмо и речь": { bg: "#edf7e8", text: "#2e6b18" },
+  "Другое":        { bg: "#f1efe9", text: "#5a5850" },
+};
+
+function getCategory(title) {
+  for (const [cat, kws] of Object.entries(CATEGORIES)) {
+    if (kws.some(k => title.includes(k))) return cat;
+  }
+  return "Другое";
+}
+
+const books = BOOKS_RAW.map(([author, title, status]) => ({
+  author, title, status,
+  cat: getCategory(title),
+  desc: null, loaded: false,
+}));
+
+document.getElementById("totalCount").textContent = books.length;
+
+let activeFilter = "Все";
+let searchVal = "";
+const ALL_CATS = ["Все", ...Object.keys(BADGE_COLORS).filter(c => c !== "Другое")];
+
+const filtersEl = document.getElementById("filters");
+ALL_CATS.forEach(cat => {
+  const btn = document.createElement("button");
+  btn.className = "filter-btn" + (cat === "Все" ? " active" : "");
+  btn.textContent = cat;
+  btn.onclick = () => {
+    activeFilter = cat;
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.textContent === cat));
+    render();
+  };
+  filtersEl.appendChild(btn);
+});
+
+document.getElementById("search").addEventListener("input", e => {
+  searchVal = e.target.value.toLowerCase();
+  render();
+});
+
+const loadingSet = new Set();
+
+async function loadDesc(book) {
+  if (book.loaded || loadingSet.has(book.title)) return;
+  loadingSet.add(book.title);
+  try {
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 150,
+        messages: [{ role: "user", content: `Книга: "${book.title}", автор: ${book.author}. Напиши ровно 2 коротких предложения на русском: о чём книга и чем она полезна. Только текст, без пояснений.` }]
+      })
+    });
+    const data = await resp.json();
+    book.desc = data.content?.[0]?.text?.trim() || "";
+  } catch(e) { book.desc = ""; }
+  book.loaded = true;
+  const el = document.querySelector('[data-title="' + CSS.escape(book.title) + '"] .card-desc');
+  if (el) el.textContent = book.desc;
+}
+
+function render() {
+  const filtered = books.filter(b => {
+    const matchCat = activeFilter === "Все" || b.cat === activeFilter;
+    const matchQ = !searchVal || b.title.toLowerCase().includes(searchVal) || b.author.toLowerCase().includes(searchVal);
+    return matchCat && matchQ;
+  });
+
+  document.getElementById("stats").innerHTML = `Показано <strong>${filtered.length}</strong> из <strong>${books.length}</strong> книг`;
+
+  const gridEl = document.getElementById("grid");
+  if (!filtered.length) {
+    gridEl.innerHTML = `<div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Ничего не найдено</div>`;
+    return;
+  }
+
+  gridEl.innerHTML = "";
+  filtered.forEach(book => {
+    const colors = BADGE_COLORS[book.cat] || BADGE_COLORS["Другое"];
+    const away = book.status !== "в офисе";
+    const card = document.createElement("div");
+    card.className = "card";
+    card.setAttribute("data-title", book.title);
+    const descHtml = book.loaded
+      ? book.desc
+      : `<span class="skel" style="height:13px;width:88%;margin-bottom:5px"></span><span class="skel" style="height:13px;width:66%"></span>`;
+    card.innerHTML = `
+      <div class="card-top">
+        <div class="card-meta">
+          <div class="card-title">${book.title}</div>
+          <div class="card-author">${book.author}</div>
+        </div>
+        <span class="badge" style="background:${colors.bg};color:${colors.text}">${book.cat}</span>
+      </div>
+      <div class="card-desc">${descHtml}</div>
+      <div class="card-footer">
+        <span class="status"><span class="dot${away ? " away" : ""}"></span>${away ? "У сотрудника" : "В офисе"}</span>
+      </div>`;
+    gridEl.appendChild(card);
+    if (!book.loaded) setTimeout(() => loadDesc(book), 100);
+  });
+}
+
+render();
+</script>
+</body>
+</html>
